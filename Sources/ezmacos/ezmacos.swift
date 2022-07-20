@@ -1,10 +1,6 @@
 import AppKit
 import Foundation
 
-@_cdecl("is_process_running")
-public func is_process_running() -> Bool {
-    return false
-}
 
 @_cdecl("list_processes")
 public func list_processes(length: UnsafeMutablePointer<UInt32>,  out_bytes:  UnsafeMutablePointer<UnsafeMutablePointer<UInt8>>) {
@@ -17,24 +13,14 @@ public func list_processes(length: UnsafeMutablePointer<UInt32>,  out_bytes:  Un
     };
     klist.values.append(k_path);
     
-    
-    /*for app in NSWorkspace.shared.runningApplications {
-        let k_path = Keeproto_KString.with {
-            $0.value = String(app.isActive);
-        }
-        klist.values.append(k_path)
-        //let ex = app.executableURL
-        /*
+    for app in NSWorkspace.shared.runningApplications {
+        let ex = app.executableURL
         let path =  ex?.absoluteString ?? ""
         let k_path = Keeproto_KString.with {
             $0.value = path
         }
-         */
-        //klist.values.append(k_path);
-        //break;
-       
-    }*/
-    
+        klist.values.append(k_path);
+    }
     
     
     var bytes:[UInt8] = [UInt8].init();
@@ -46,69 +32,28 @@ public func list_processes(length: UnsafeMutablePointer<UInt32>,  out_bytes:  Un
     }
     
     length.pointee = UInt32(bytes.count);
-
     var x = UnsafeMutablePointer<UInt8>.allocate(capacity: bytes.count);
-    //print("UInt8 aligntment: %", MemoryLayout<UInt16>.stride)
     
     let head = x;
     for b in bytes {
         x.pointee = b;
-        //x.advanced(by: 1);
         x = x.successor()
     }
     x=head;
     out_bytes.pointee = x;
-    //x.deallocate();
-    
 }
 
-/*
-    swiftc Sources/keemac/keemac.swift -emit-library
-    cp libkeemac* /usr/local/lib/
- */
-@_cdecl("get_running_app")
-public func get_running_app() -> Int32 {
-  /*
-    for app in NSWorkspace.init().runningApplications {
-        if app.isActive {
-            let ex = app.executableURL
-            return ex?.absoluteString ?? ""
-        }
-    }
-    */
-    return 3
-}
 
-@_cdecl("is_wow_active")
-public func is_wow_active() -> Bool  {
-    
-  
+@_cdecl("is_process_active")
+public func is_process_active(suffix: String) -> Bool  {
     for app in NSWorkspace.shared.runningApplications {
-    
         if app.isActive {
             let ex = app.executableURL
             let path =  ex?.absoluteString ?? ""
-            return path.hasSuffix("Warcraft%20Classic")
+            return path.hasSuffix(suffix)
         }
     }
     return false
-}
-
-@available(macOS 10.11, *)
-@_cdecl("send_key")
-public func send_key() {
-    let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-    
-    let kspd = CGEvent(keyboardEventSource: src, virtualKey: 0x31, keyDown: true)   // space-down
-    let kspu = CGEvent(keyboardEventSource: src, virtualKey: 0x31, keyDown: false)  // space-up
-
-    let pids = [ 93407 ]; // real PID-s from command 'ps -ax' - e.g. for example 3 different processes
-    
-    for i in 0 ..< pids.count {
-        print("sending to pid: ", pids[i]);
-        kspd?.postToPid( pid_t(pids[i]) ); // convert int to pid_t
-        kspu?.postToPid( pid_t(pids[i]) );
-    }
 }
 
 @_cdecl("are_we_trusted")
@@ -177,9 +122,6 @@ public func send_key_down_to_pid(pid: Int32, virtual_key: UInt16, shift: Bool, a
     
     if(shift) {
         kspu?.flags.insert(CGEventFlags.maskShift);
-        
-        
-        
     }
 
     if(alt) {
@@ -192,23 +134,4 @@ public func send_key_down_to_pid(pid: Int32, virtual_key: UInt16, shift: Bool, a
     
     kspu?.postToPid(pid_t(pid));
 }
-
-
-/*
-import Foundation
-
-let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-    
-let kspd = CGEvent(keyboardEventSource: src, virtualKey: 0x31, keyDown: true)   // space-down
-let kspu = CGEvent(keyboardEventSource: src, virtualKey: 0x31, keyDown: false)  // space-up
-
-let pids = [ 24834, 24894, 24915 ]; // real PID-s from command 'ps -ax' - e.g. for example 3 different processes
-    
-for i in 0 ..< pids.count {
-    print("sending to pid: ", pids[i]);
-    kspd?.postToPid( pid_t(pids[i]) ); // convert int to pid_t
-    kspu?.postToPid( pid_t(pids[i]) );
-}
-*/
-
 
