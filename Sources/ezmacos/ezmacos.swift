@@ -45,7 +45,17 @@ public func list_processes(length: UnsafeMutablePointer<UInt32>,  out_bytes:  Un
 
 
 @_cdecl("is_process_active")
-public func is_process_active(suffix: String) -> Bool  {
+public func is_process_active(length: Int64,  in_bytes:  UnsafeMutablePointer<UInt8>) -> Bool  {
+    
+    let a = UnsafeMutableBufferPointer(start: in_bytes, count: Int(length))
+    var suffix = "";
+    do {
+        if let passed_str = try? Keeproto_KString(contiguousBytes: a) {
+            suffix = passed_str.value;
+        }
+    }
+    catch {}
+
     for app in NSWorkspace.shared.runningApplications {
         if app.isActive {
             let ex = app.executableURL
