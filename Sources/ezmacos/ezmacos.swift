@@ -1,6 +1,19 @@
 import AppKit
 import Foundation
 
+@_cdecl("app_focus_change")
+public func app_focus_change(cb: @convention(c) ()->Void) {
+    print("added observer")
+    //let c = cb.load(as: (@convention(c) (*)->Void).self)
+   
+    NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: OperationQueue.current) { (n:Notification) -> Void in
+        print("app focus change")
+        //let c = cb.load(as: (@convention(c)()->Void).self)
+        cb()
+    };
+}
+
+
 
 @_cdecl("list_processes")
 public func list_processes(length: UnsafeMutablePointer<UInt32>,  out_bytes:  UnsafeMutablePointer<UnsafeMutablePointer<UInt8>>) {
@@ -125,10 +138,14 @@ public func send_key_up_to_pid(pid: Int32, virtual_key: UInt16) {
         kspu?.postToPid(pid_t(pid));
 }
 
+//https://developer.apple.com/documentation/coregraphics/cgevent
+// postToPSN might be more appropiate here if we want other taps to detect event
+// It requires a processSerialNumber which looks like a raw pointer to a Process type
 @available(macOS 10.11, *)
 @_cdecl("send_key_down_to_pid")
 public func send_key_down_to_pid(pid: Int32, virtual_key: UInt16, shift: Bool, alt:Bool, control: Bool) {
     let kspu = CGEvent(keyboardEventSource: src, virtualKey: virtual_key, keyDown: true);
+
     
     if(shift) {
         kspu?.flags.insert(CGEventFlags.maskShift);
@@ -142,6 +159,7 @@ public func send_key_down_to_pid(pid: Int32, virtual_key: UInt16, shift: Bool, a
         kspu?.flags.insert(CGEventFlags.maskControl);
     }
     
+  
     kspu?.postToPid(pid_t(pid));
 }
 
